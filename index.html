@@ -425,7 +425,7 @@
             // Cases vides avant le 1er du mois
             for (let i = 0; i < startDay; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = 'bg-dark-900/20 border border-slate-800/40 rounded-xl min-h-[100px] opacity-20';
+                emptyCell.className = 'bg-dark-900/20 border border-slate-800/40 rounded-xl min-h-[120px] opacity-20';
                 calendarGrid.appendChild(emptyCell);
             }
 
@@ -434,7 +434,7 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
                 const dayCell = document.createElement('div');
-                dayCell.className = 'bg-dark-900 border border-slate-700/80 rounded-xl p-2 min-h-[110px] flex flex-col justify-between transition hover:border-slate-500 relative group';
+                dayCell.className = 'bg-dark-900 border border-slate-700/80 rounded-xl p-2 min-h-[130px] flex flex-col justify-between transition hover:border-slate-500 relative group';
                 dayCell.setAttribute('ondragover', 'allowDrop(event)');
                 dayCell.setAttribute('ondrop', `dropWorkout(event, '${dateStr}')`);
 
@@ -449,13 +449,14 @@
                 `;
                 dayCell.appendChild(dayHeader);
 
-                // Conteneur des séances du jour
-                const workoutsContainer = document.createElement('div');
-                workoutsContainer.className = 'space-y-1.5 overflow-y-auto max-h-[85px]';
-
                 // Filtrer les entraînements de ce jour
                 const dayWorkouts = workouts.filter(w => w.date === dateStr);
-                
+                const count = dayWorkouts.length;
+
+                // Conteneur des séances du jour avec flex-1 pour occuper toute la case si 1 seule séance
+                const workoutsContainer = document.createElement('div');
+                workoutsContainer.className = count === 1 ? 'flex-1 flex flex-col justify-center space-y-1 my-auto' : 'space-y-1.5 overflow-y-auto max-h-[95px]';
+
                 dayWorkouts.forEach(w => {
                     if (w.completed) completedCount++;
 
@@ -467,19 +468,23 @@
                     };
                     const badgeClass = typeColors[w.type] || 'bg-slate-700 text-slate-300 border-slate-600';
 
+                    // Si 1 seule séance, on lui donne plus de hauteur (p-2.5) et un rendu plus visuel
+                    const cardPadding = count === 1 ? 'p-2.5 text-xs' : 'p-1.5 text-xs';
+
                     const workoutCard = document.createElement('div');
-                    workoutCard.className = `p-1.5 rounded-lg border text-xs cursor-grab active:cursor-grabbing transition ${badgeClass} ${w.completed ? 'opacity-50 line-through' : 'shadow-sm'}`;
+                    workoutCard.className = `rounded-lg border cursor-grab active:cursor-grabbing transition ${cardPadding} ${badgeClass} ${w.completed ? 'opacity-50 line-through' : 'shadow-sm'}`;
                     workoutCard.draggable = true;
                     workoutCard.setAttribute('ondragstart', `drag(event, '${w.id}')`);
                     
                     workoutCard.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <span class="font-semibold truncate" onclick="openDetails('${w.id}')" title="${w.title}">${w.title}</span>
-                            <div class="flex items-center space-x-1">
-                                <button onclick="toggleWorkout('${w.id}', ${!w.completed})" class="hover:text-emerald-400"><i class="fa-solid ${w.completed ? 'fa-rotate-left' : 'fa-check'} text-[10px]"></i></button>
-                                <button onclick="deleteWorkout('${w.id}')" class="hover:text-red-400"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        <div class="flex items-center justify-between mb-0.5">
+                            <span class="font-bold truncate text-[11px] uppercase tracking-wider opacity-75">${w.type}</span>
+                            <div class="flex items-center space-x-1.5">
+                                <button onclick="toggleWorkout('${w.id}', ${!w.completed})" class="hover:text-emerald-400"><i class="fa-solid ${w.completed ? 'fa-rotate-left' : 'fa-check'} text-[11px]"></i></button>
+                                <button onclick="deleteWorkout('${w.id}')" class="hover:text-red-400"><i class="fa-solid fa-trash text-[11px]"></i></button>
                             </div>
                         </div>
+                        <div class="font-semibold truncate leading-tight" onclick="openDetails('${w.id}')" title="${w.title}">${w.title}</div>
                     `;
                     workoutsContainer.appendChild(workoutCard);
                 });
