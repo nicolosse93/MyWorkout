@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Plan d'Entraînement</title>
+    <title>Mon Plan d'Entraînement Intelligent</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -13,6 +13,7 @@
                 extend: {
                     colors: {
                         dark: {
+                            950: '#090d16',
                             900: '#0f172a',
                             800: '#1e293b',
                             700: '#334155',
@@ -85,7 +86,7 @@
         <!-- CONTENU PRINCIPAL -->
         <main class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-1 space-y-6">
             
-            <!-- SECTION STATS & AJOUT -->
+            <!-- SECTION STATS & ACTIONS COACH -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-dark-800 border border-slate-700 rounded-2xl p-4 flex items-center justify-between">
                     <div>
@@ -97,15 +98,21 @@
                     </div>
                 </div>
 
-                <div class="bg-dark-800 border border-slate-700 rounded-2xl p-4 md:col-span-2 flex items-center justify-between">
+                <div class="bg-dark-800 border border-slate-700 rounded-2xl p-4 md:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
-                        <h4 class="font-semibold text-slate-200">Ajouter une séance</h4>
-                        <p class="text-xs text-slate-400 mt-0.5">Planifie ton prochain entraînement.</p>
+                        <h4 class="font-semibold text-slate-200">Coach Intelligent & Planning</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Génère ta semaine complète ou ajoute une séance.</p>
                     </div>
-                    <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center space-x-2 shadow-lg shadow-emerald-900/30">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Nouvelle séance</span>
-                    </button>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <button onclick="openGeneratorModal()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-3 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-lg shadow-blue-900/30">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Générer un plan</span>
+                        </button>
+                        <button onclick="openModal()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/30">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Séance unique</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -122,13 +129,13 @@
 
                 <div id="no-workouts" class="text-center py-12 text-slate-500 hidden">
                     <i class="fa-solid fa-calendar-xmark text-3xl mb-2"></i>
-                    <p>Aucun entraînement planifié pour le moment.</p>
+                    <p>Aucun entraînement planifié pour le moment. Utilise le générateur ou ajoute une séance !</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- MODAL AJOUT ENTRAÎNEMENT -->
+    <!-- MODAL AJOUT SÉANCE UNIQUE -->
     <div id="workout-modal" class="fixed inset-0 bg-dark-950/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl">
             <h3 class="text-xl font-bold mb-4">Planifier un entraînement</h3>
@@ -160,10 +167,77 @@
         </div>
     </div>
 
+    <!-- MODAL GÉNÉRATEUR INTELLIGENT DE SEMAINE -->
+    <div id="generator-modal" class="fixed inset-0 bg-dark-950/80 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-800 border border-slate-700 w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold flex items-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-blue-400"></i>
+                    <span>Générateur de Plan Hebdomadaire</span>
+                </h3>
+                <button onclick="closeGeneratorModal()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="generator-form" class="space-y-4">
+                <!-- Objectif -->
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Objectif principal</label>
+                    <select id="gen-goal" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
+                        <option value="5k">Préparation 5K (Vitesse & Rythme)</option>
+                        <option value="10k">Préparation 10K (Endurance & Allure)</option>
+                        <option value="maintien">Maintien de la forme & Santé</option>
+                    </select>
+                </div>
+
+                <!-- Niveau -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Niveau d'expérience</label>
+                        <select id="gen-level" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
+                            <option value="debutant">Débutant</option>
+                            <option value="intermediaire" selected>Intermédiaire</option>
+                            <option value="avance">Avancé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Niveau d'énergie actuel</label>
+                        <select id="gen-energy" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
+                            <option value="haute">Pêche d'enfer (Prêt à progresser)</option>
+                            <option value="normale" selected>Normal / Stable</option>
+                            <option value="fatigue">Fatigué (Besoin de récup)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Nombre de séances -->
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Nombre de séances dans la semaine</label>
+                    <select id="gen-frequency" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
+                        <option value="2">2 Séances</option>
+                        <option value="3" selected>3 Séances</option>
+                        <option value="4">4 Séances</option>
+                        <option value="5">5 Séances</option>
+                    </select>
+                </div>
+
+                <div class="bg-dark-900/50 border border-slate-700/60 rounded-xl p-3 text-xs text-slate-400 space-y-1">
+                    <p><i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> Le plan généré remplacera ou complétera ta semaine en cours en s'appuyant sur la règle des 80/20 (endurance fondamentale et intensité adaptée à ton niveau d'énergie).</p>
+                </div>
+
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeGeneratorModal()" class="flex-1 bg-dark-700 hover:bg-slate-700 text-slate-300 font-semibold py-3 rounded-xl transition">Annuler</button>
+                    <button type="submit" id="gen-submit-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-900/30">Générer mon plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- SCRIPT APPLICATION -->
     <script>
         // ==========================================
-        // CONFIGURATION SUPABASE (À REMPLACER)
+        // CONFIGURATION SUPABASE
         // ==========================================
         const SUPABASE_URL = 'https://dopgoecbdssvxexanavs.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_5GrtRyqg1LV-wDZpFUxEnw_FHTDWbux';
@@ -185,6 +259,7 @@
         const noWorkouts = document.getElementById('no-workouts');
         const userEmailDisplay = document.getElementById('user-email-display');
         const workoutModal = document.getElementById('workout-modal');
+        const generatorModal = document.getElementById('generator-modal');
 
         // Initialisation de l'auth
         async function initAuth() {
@@ -317,13 +392,21 @@
             fetchWorkouts();
         }
 
-        // Modal Contrôle
+        // Modal Séance Unique
         function openModal() {
             document.getElementById('w-date').valueAsDate = new Date();
             workoutModal.classList.remove('hidden');
         }
         function closeModal() {
             workoutModal.classList.add('hidden');
+        }
+
+        // Modal Générateur de Plan
+        function openGeneratorModal() {
+            generatorModal.classList.remove('hidden');
+        }
+        function closeGeneratorModal() {
+            generatorModal.classList.add('hidden');
         }
 
         document.getElementById('workout-form').addEventListener('submit', async (e) => {
@@ -342,6 +425,94 @@
                 closeModal();
                 document.getElementById('workout-form').reset();
                 fetchWorkouts();
+            }
+        });
+
+        // Algorithme de Génération de Semaine Intelligente
+        document.getElementById('generator-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const goal = document.getElementById('gen-goal').value;
+            const level = document.getElementById('gen-level').value;
+            const energy = document.getElementById('gen-energy').value;
+            const frequency = parseInt(document.getElementById('gen-frequency').value);
+
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+
+            // Déterminer les séances basées sur l'objectif et l'énergie
+            let generatedPlan = [];
+            let intensityModifier = energy === 'fatigue' ? ' (Allégé - Récupération)' : (energy === 'haute' ? ' (Intensité soutenue)' : '');
+
+            // Obtenir les dates de la semaine courante (du Lundi au Dimanche)
+            const today = new Date();
+            const currentDayOfWeek = today.getDay() === 0 ? 7 : today.getDay(); // Lundi = 1, Dimanche = 7
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - currentDayOfWeek + 1);
+
+            // Modèles de distribution selon la fréquence choisie
+            // Jours offsets par rapport au lundi : 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim
+            let offsets = [];
+            if (frequency === 2) offsets = [1, 5]; // Mar, Sam
+            else if (frequency === 3) offsets = [1, 3, 6]; // Mar, Jeu, Dim
+            else if (frequency === 4) offsets = [1, 2, 4, 6]; // Mar, Mer, Ven, Dim
+            else if (frequency === 5) offsets = [1, 2, 4, 5, 6]; // Mar, Mer, Ven, Sam, Dim
+
+            // Définition des types et titres selon l'objectif
+            let workoutsTemplate = [];
+
+            if (goal === '5k') {
+                workoutsTemplate = [
+                    { type: 'Course', title: 'Fractionné Court 5K (Allure VMA)' + intensityModifier },
+                    { type: 'Course', title: 'Endurance Fondamentale (45 min)' },
+                    { type: 'Renfo', title: 'Renforcement Musculaire Spécifique C.P.' },
+                    { type: 'Course', title: 'Seuil / Allure Spécifique 5K' },
+                    { type: 'Course', title: 'Sortie Longue Progressive' }
+                ];
+            } else if (goal === '10k') {
+                workoutsTemplate = [
+                    { type: 'Course', title: 'Fractionné Long (Allure 10K)' + intensityModifier },
+                    { type: 'Course', title: 'Endurance Fondamentale (50 min)' },
+                    { type: 'Renfo', title: 'Gainage et Renfo Postural' },
+                    { type: 'Course', title: 'Footing Actif + Lignes droites' },
+                    { type: 'Course', title: 'Sortie Longue Endurance (1h+)' }
+                ];
+            } else { // Maintien
+                workoutsTemplate = [
+                    { type: 'Course', title: 'Footing Léger / Maintien Cardio' + intensityModifier },
+                    { type: 'Vélo', title: 'Sortie Vélo / Gravel Douce' },
+                    { type: 'Renfo', title: 'Entraînement Global / Corps complet' },
+                    { type: 'Course', title: 'Footing Récupération' },
+                    { type: 'Vélo', title: 'Sortie Longue Rythme Modéré' }
+                ];
+            }
+
+            // Construire les insertions pour Supabase
+            let inserts = [];
+            for (let i = 0; i < frequency; i++) {
+                let templateIndex = i % workoutsTemplate.length;
+                let dayOffset = offsets[i] !== undefined ? offsets[i] : i;
+                
+                let targetDate = new Date(monday);
+                targetDate.setDate(monday.getDate() + dayOffset);
+                let dateString = targetDate.toISOString().split('T')[0];
+
+                inserts.push({
+                    title: workoutsTemplate[templateIndex].title,
+                    type: workoutsTemplate[templateIndex].type,
+                    date: dateString,
+                    completed: false,
+                    user_id: user.id
+                });
+            }
+
+            // Insertion en base de données
+            const { error } = await supabaseClient.from('workouts').insert(inserts);
+
+            if (!error) {
+                closeGeneratorModal();
+                fetchWorkouts();
+            } else {
+                alert("Erreur lors de la génération du plan : " + error.message);
             }
         });
 
