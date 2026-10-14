@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeFit - Plan d'Entraînement Interactif</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#090d16',
+                            800: '#111827',
+                            700: '#1f293d',
+                            600: '#374151'
+                        },
+                        brand: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            400: '#818cf8',
+                            accent: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Inter & Phosphor Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+    <header class="sticky top-0 z-50 bg-dark-800/80 backdrop-blur-md border-b border-dark-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="ph-bold ph-lightning text-xl text-white"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-gray-200 to-brand-400 bg-clip-text text-transparent">VibeFit</span>
+                    <span class="text-xs block text-brand-400 font-medium">Training OS</span>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-brand-600 text-white shadow-md shadow-brand-600/20 flex items-center space-x-2">
+                    <i class="ph-bold ph-squares-four text-base"></i>
+                    <span>Tableau de bord</span>
+                </button>
+                <button onclick="switchTab('plan')" id="nav-plan" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-white hover:bg-dark-700 flex items-center space-x-2">
+                    <i class="ph-bold ph-calendar-blank text-base"></i>
+                    <span>Plan Semaine</span>
+                </button>
+                <button onclick="switchTab('generator')" id="nav-generator" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-white hover:bg-dark-700 flex items-center space-x-2">
+                    <i class="ph-bold ph-magic-wand text-base"></i>
+                    <span>Générateur IA</span>
+                </button>
+                <button onclick="switchTab('timer')" id="nav-timer" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-white hover:bg-dark-700 flex items-center space-x-2">
+                    <i class="ph-bold ph-timer text-base"></i>
+                    <span>Chronomètre / HIIT</span>
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="openAddSessionModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-brand-500/20 flex items-center space-x-2">
+                    <i class="ph-bold ph-plus"></i>
+                    <span class="hidden sm:inline">Ajouter une séance</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-dark-800/90 backdrop-blur-md border-t border-dark-700 px-4 py-2 flex justify-around items-center">
+        <button onclick="switchTab('dashboard')" id="mob-dashboard" class="p-2 text-brand-400 flex flex-col items-center text-xs">
+            <i class="ph-bold ph-squares-four text-xl"></i>
+            <span>Accueil</span>
+        </button>
+        <button onclick="switchTab('plan')" id="mob-plan" class="p-2 text-gray-400 flex flex-col items-center text-xs">
+            <i class="ph-bold ph-calendar-blank text-xl"></i>
+            <span>Plan</span>
+        </button>
+        <button onclick="switchTab('generator')" id="mob-generator" class="p-2 text-gray-400 flex flex-col items-center text-xs">
+            <i class="ph-bold ph-magic-wand text-xl"></i>
+            <span>Générateur</span>
+        </button>
+        <button onclick="switchTab('timer')" id="mob-timer" class="p-2 text-gray-400 flex flex-col items-center text-xs">
+            <i class="ph-bold ph-timer text-xl"></i>
+            <span>Chrono</span>
+        </button>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16 md:mb-0">
+        
+        <!-- DASHBOARD TAB -->
+        <section id="tab-dashboard" class="space-y-6">
+            <!-- Welcome Header -->
+            <div class="bg-gradient-to-r from-dark-800 to-dark-700 border border-dark-700 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
+                <div class="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 text-xs font-semibold mb-3 border border-brand-500/20">
+                            <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+                            <span>Saison 2026 • Semaine Active</span>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Bonjour, Athlète ⚡</h1>
+                        <p class="text-gray-400 text-sm sm:text-base mt-1">Voici le récapitulatif de votre charge et de vos objectifs de la semaine.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="bg-dark-900/60 border border-dark-600 rounded-2xl p-4 text-center min-w-[120px]">
+                            <span class="text-xs text-gray-400 block font-medium">Séances Fait</span>
+                            <span id="stats-done" class="text-2xl font-bold text-white">0 / 0</span>
+                        </div>
+                        <div class="bg-dark-900/60 border border-dark-600 rounded-2xl p-4 text-center min-w-[120px]">
+                            <span class="text-xs text-gray-400 block font-medium">Charge Totale</span>
+                            <span id="stats-load" class="text-2xl font-bold text-brand-400">0 min</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Metrics Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+                    <div>
+                        <p class="text-xs font-medium text-gray-400">Course à pied</p>
+                        <h3 id="stat-run" class="text-xl font-bold text-white mt-1">0 min</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center text-xl">
+                        <i class="ph-bold ph-sneaker-move"></i>
+                    </div>
+                </div>
+                <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+                    <div>
+                        <p class="text-xs font-medium text-gray-400">Cyclisme / Gravel</p>
+                        <h3 id="stat-bike" class="text-xl font-bold text-white mt-1">0 min</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl">
+                        <i class="ph-bold ph-bicycle"></i>
+                    </div>
+                </div>
+                <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+                    <div>
+                        <p class="text-xs font-medium text-gray-400">Renfo & Yoga</p>
+                        <h3 id="stat-gym" class="text-xl font-bold text-white mt-1">0 min</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl">
+                        <i class="ph-bold ph-barbell"></i>
+                    </div>
+                </div>
+                <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+                    <div>
+                        <p class="text-xs font-medium text-gray-400">Récup / Repos</p>
+                        <h3 id="stat-rest" class="text-xl font-bold text-white mt-1">0 jours</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                        <i class="ph-bold ph-bed"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Focus & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Today Highlights -->
+                <div class="lg:col-span-2 bg-dark-800 border border-dark-700 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="ph-bold ph-compass text-brand-400"></i>
+                                Séances du Jour
+                            </h2>
+                            <span id="current-date-label" class="text-xs text-gray-400 bg-dark-700 px-3 py-1 rounded-full"></span>
+                        </div>
+                        <div id="today-sessions-container" class="space-y-3">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-dark-700 flex justify-between items-center text-xs text-gray-400">
+                        <span>Astuce vibe coding : Cochez vos séances pour mettre à jour la charge en direct.</span>
+                        <button onclick="switchTab('plan')" class="text-brand-400 hover:underline font-semibold">Voir tout le planning →</button>
+                    </div>
+                </div>
+
+                <!-- Quick Tools / Timer Card -->
+                <div class="bg-gradient-to-br from-brand-600/20 via-dark-800 to-dark-800 border border-brand-500/30 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="ph-bold ph-lightning text-brand-400"></i>
+                                Minuteur Express
+                            </h2>
+                            <span class="text-xs text-brand-400 bg-brand-500/20 px-2 py-0.5 rounded">HIIT / Récup</span>
+                        </div>
+                        <div class="text-center py-6">
+                            <div id="quick-timer-display" class="text-5xl font-extrabold text-white tracking-wider mb-2 font-mono">00:00</div>
+                            <p id="quick-timer-label" class="text-xs text-gray-400">Prêt pour l'effort</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="startQuickTimer(30)" class="bg-dark-700 hover:bg-dark-600 text-white py-2.5 px-4 rounded-xl text-xs font-semibold transition-all border border-dark-600">30s Sprint</button>
+                        <button onclick="startQuickTimer(60)" class="bg-dark-700 hover:bg-dark-600 text-white py-2.5 px-4 rounded-xl text-xs font-semibold transition-all border border-dark-600">60s Récup</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PLAN SEMANA TAB -->
+        <section id="tab-plan" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Planification Hebdomadaire</h1>
+                    <p class="text-sm text-gray-400">Gérez, cochez ou modifiez vos séances de la semaine.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetWeeklyPlan()" class="bg-dark-800 hover:bg-dark-700 border border-dark-600 text-gray-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all">Réinitialiser</button>
+                    <button onclick="openAddSessionModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-brand-500/20">Ajouter</button>
+                </div>
+            </div>
+
+            <!-- Weekly Grid Container -->
+            <div id="weekly-plan-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+                <!-- Generated dynamically per day -->
+            </div>
+        </section>
+
+        <!-- GENERATOR TAB -->
+        <section id="tab-generator" class="hidden space-y-6">
+            <div class="bg-dark-800 border border-dark-700 rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto">
+                <div class="text-center max-w-lg mx-auto mb-8">
+                    <div class="w-14 h-14 rounded-2xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-2xl mx-auto mb-4 border border-brand-500/20">
+                        <i class="ph-bold ph-magic-wand"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white">Générateur Intelligent de Plan</h1>
+                    <p class="text-sm text-gray-400 mt-1">Sélectionnez votre profil et vos objectifs pour générer instantanément une semaine sur-mesure.</p>
+                </div>
+
+                <form id="generator-form" onsubmit="handleGeneratePlan(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">Objectif Principal</label>
+                            <select id="gen-goal" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500">
+                                <option value="endurance">Endurance Fondamentale & Volume</option>
+                                <option value="cardio">Cardio & VMA / Intervalles</option>
+                                <option value="hybride">Hybride (Course + Vélo + Renfo)</option>
+                                <option value="course">Préparation Course / Événement</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">Niveau d'intensité</label>
+                            <select id="gen-level" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500">
+                                <option value="intermediaire">Intermédiaire (3-4 séances)</option>
+                                <option value="avance">Avancé / Intense (5-6 séances)</option>
+                                <option value="douce">Remise en forme / Douce (2-3 séances)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-dark-900/50 rounded-2xl border border-dark-700 text-xs text-gray-400 flex items-start space-x-3">
+                        <i class="ph-bold ph-info text-brand-400 text-lg mt-0.5"></i>
+                        <span>Le générateur va remplacer votre plan actuel par une suite équilibrée de course à pied, cyclisme/gravel, renforcement musculaire et jours de repos.</span>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-brand-600 to-brand-400 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-brand-500/30 hover:opacity-90 transition-all flex items-center justify-center space-x-2">
+                        <i class="ph-bold ph-sparkle text-lg"></i>
+                        <span>Générer mon plan d'entraînement</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TIMER / HIIT TAB -->
+        <section id="tab-timer" class="hidden space-y-6">
+            <div class="max-w-xl mx-auto bg-dark-800 border border-dark-700 rounded-3xl p-6 sm:p-8 shadow-xl text-center">
+                <div class="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mx-auto mb-4 border border-brand-500/20">
+                    <i class="ph-bold ph-timer"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-1">Chronomètre & Fractionné</h1>
+                <p class="text-sm text-gray-400 mb-8">Idéal pour vos séances de VMA, tabata ou récupération.</p>
+
+                <!-- Mode Selector -->
+                <div class="flex justify-center gap-2 mb-6">
+                    <button onclick="setTimerMode('stopwatch')" id="btn-mode-stopwatch" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white transition-all">Chrono Simple</button>
+                    <button onclick="setTimerMode('hiit')" id="btn-mode-hiit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-dark-700 text-gray-300 transition-all">Intervalle / HIIT</button>
+                </div>
+
+                <!-- Stopwatch view -->
+                <div id="view-stopwatch" class="space-y-6">
+                    <div class="text-6xl sm:text-7xl font-mono font-extrabold text-white tracking-widest py-6 bg-dark-900 rounded-2xl border border-dark-700 shadow-inner">
+                        <span id="sw-display">00:00:00</span>
+                    </div>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="toggleStopwatch()" id="sw-start-btn" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-500/20 flex items-center gap-2">
+                            <i class="ph-bold ph-play"></i> Démarrer
+                        </button>
+                        <button onclick="resetStopwatch()" class="bg-dark-700 hover:bg-dark-600 text-gray-300 px-6 py-3 rounded-xl font-semibold text-sm border border-dark-600">Réinitialiser</button>
+                    </div>
+                </div>
+
+                <!-- HIIT view -->
+                <div id="view-hiit" class="hidden space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-dark-900 p-4 rounded-xl border border-dark-700">
+                            <label class="block text-xs text-gray-400 mb-1">Effort (sec)</label>
+                            <input type="number" id="hiit-work" value="30" class="w-full bg-dark-800 border border-dark-600 rounded-lg text-center py-2 text-white font-bold">
+                        </div>
+                        <div class="bg-dark-900 p-4 rounded-xl border border-dark-700">
+                            <label class="block text-xs text-gray-400 mb-1">Récup (sec)</label>
+                            <input type="number" id="hiit-rest" value="30" class="w-full bg-dark-800 border border-dark-600 rounded-lg text-center py-2 text-white font-bold">
+                        </div>
+                    </div>
+
+                    <div class="text-5xl sm:text-6xl font-mono font-extrabold text-brand-400 tracking-widest py-6 bg-dark-900 rounded-2xl border border-dark-700 shadow-inner">
+                        <span id="hiit-display">30</span>
+                        <div id="hiit-status" class="text-xs font-sans text-gray-400 uppercase tracking-widest mt-2">Prêt</div>
+                    </div>
+
+                    <div class="flex justify-center gap-3">
+                        <button onclick="toggleHiit()" id="hiit-start-btn" class="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-500/20 flex items-center gap-2">
+                            <i class="ph-bold ph-play"></i> Lancer HIIT
+                        </button>
+                        <button onclick="resetHiit()" class="bg-dark-700 hover:bg-dark-600 text-gray-300 px-6 py-3 rounded-xl font-semibold text-sm border border-dark-600">Stop</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add / Edit Session Modal -->
+    <div id="session-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-dark-800 border border-dark-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeAddSessionModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+            <h2 id="modal-title" class="text-xl font-bold text-white mb-4">Ajouter une Séance</h2>
+            
+            <form id="session-form" onsubmit="handleSaveSession(event)" class="space-y-4">
+                <input type="hidden" id="session-id">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Jour de la semaine</label>
+                    <select id="session-day" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                        <option value="Lundi">Lundi</option>
+                        <option value="Mardi">Mardi</option>
+                        <option value="Mercredi">Mercredi</option>
+                        <option value="Jeudi">Jeudi</option>
+                        <option value="Vendredi">Vendredi</option>
+                        <option value="Samedi">Samedi</option>
+                        <option value="Dimanche">Dimanche</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Type d'activité</label>
+                    <select id="session-type" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                        <option value="run">Course à pied</option>
+                        <option value="bike">Cyclisme / Gravel Bike</option>
+                        <option value="gym">Renforcement Musculaire / Yoga</option>
+                        <option value="rest">Repos / Récupération</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Titre de la séance</label>
+                    <input type="text" id="session-name" required placeholder="ex: Sortie longue endurance" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Durée (min)</label>
+                        <input type="number" id="session-duration" value="45" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Intensité</label>
+                        <select id="session-intensity" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                            <option value="Faible">Faible (Z1-Z2)</option>
+                            <option value="Modérée" selected>Modérée (Z3)</option>
+                            <option value="Élevée">Élevée (VMA/Seuil)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Notes / Consignes</label>
+                    <textarea id="session-notes" rows="2" placeholder="Détails de l'entraînement..." class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeAddSessionModal()" class="bg-dark-700 hover:bg-dark-600 text-gray-300 px-4 py-2.5 rounded-xl text-xs font-semibold">Annuler</button>
+                    <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Default initial weekly plan
+        const defaultPlan = [
+            { id: '1', day: 'Lundi', type: 'run', name: 'Footing de récupération', duration: 35, intensity: 'Faible', completed: false, notes: 'Zone 2 stricte, respiration nasale.' },
+            { id: '2', day: 'Mardi', type: 'bike', name: 'Gravel Ride - Intervalles', duration: 60, intensity: 'Élevée', completed: false, notes: '4x 5 min au seuil.' },
+            { id: '3', day: 'Mercredi', type: 'gym', name: 'Renforcement & Core', duration: 45, intensity: 'Modérée', completed: false, notes: 'Gainage, abdos, mobilité hanches.' },
+            { id: '4', day: 'Jeudi', type: 'run', name: 'Course VMA Courte', duration: 50, intensity: 'Élevée', completed: false, notes: '10x 400m / 400m trot.' },
+            { id: '5', day: 'Vendredi', type: 'rest', name: 'Jour de Repos Total', duration: 0, intensity: 'Faible', completed: true, notes: 'Étirements doux conseillés.' },
+            { id: '6', day: 'Samedi', type: 'bike', name: 'Sortie Longue Cyclisme', duration: 120, intensity: 'Modérée', completed: false, notes: 'Cadence souple, ravitaillement eau.' },
+            { id: '7', day: 'Dimanche', type: 'gym', name: 'Yoga & Mobilité', duration: 30, intensity: 'Faible', completed: false, notes: 'Focus récupération ischio & dos.' }
+        ];
+
+        let trainingPlan = JSON.parse(localStorage.getItem('vibefit_plan')) || defaultPlan;
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('vibefit_plan', JSON.stringify(trainingPlan));
+            renderAll();
+        }
+
+        // Navigation between tabs
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'plan', 'generator', 'timer'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const navBtn = document.getElementById(`nav-${t}`);
+                const mobBtn = document.getElementById(`mob-${t}`);
+                
+                if (t === tabId) {
+                    el.classList.remove('hidden');
+                    if(navBtn) {
+                        navBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all bg-brand-600 text-white shadow-md shadow-brand-600/20 flex items-center space-x-2";
+                    }
+                    if(mobBtn) {
+                        mobBtn.className = "p-2 text-brand-400 flex flex-col items-center text-xs";
+                    }
+                } else {
+                    el.classList.add('hidden');
+                    if(navBtn) {
+                        navBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-white hover:bg-dark-700 flex items-center space-x-2";
+                    }
+                    if(mobBtn) {
+                        mobBtn.className = "p-2 text-gray-400 flex flex-col items-center text-xs";
+                    }
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Render everything
+        function renderAll() {
+            renderDashboard();
+            renderWeeklyPlan();
+        }
+
+        // Dashboard stats & today sessions
+        function renderDashboard() {
+            const daysOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+            
+            // Format today label
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const todayStr = new Date().toLocaleDateString('fr-FR', options);
+            document.getElementById('current-date-label').innerText = todayStr.charAt(0).toUpperCase() + todayStr.slice(1);
+
+            // Compute Stats
+            let totalSessions = trainingPlan.length;
+            let completedSessions = trainingPlan.filter(s => s.completed).length;
+            let totalLoad = trainingPlan.reduce((acc, s) => acc + (s.completed ? s.duration : 0), 0);
+
+            document.getElementById('stats-done').innerText = `${completedSessions} / ${totalSessions}`;
+            document.getElementById('stats-load').innerText = `${totalLoad} min`;
+
+            // Category loads
+            let runMin = trainingPlan.filter(s => s.type === 'run').reduce((a,b) => a + b.duration, 0);
+            let bikeMin = trainingPlan.filter(s => s.type === 'bike').reduce((a,b) => a + b.duration, 0);
+            let gymMin = trainingPlan.filter(s => s.type === 'gym').reduce((a,b) => a + b.duration, 0);
+            let restDays = trainingPlan.filter(s => s.type === 'rest').length;
+
+            document.getElementById('stat-run').innerText = `${runMin} min`;
+            document.getElementById('stat-bike').innerText = `${bikeMin} min`;
+            document.getElementById('stat-gym').innerText = `${gymMin} min`;
+            document.getElementById('stat-rest').innerText = `${restDays} j`;
+
+            // Render today preview (take first 3 sessions or simulation)
+            const todayContainer = document.getElementById('today-sessions-container');
+            todayContainer.innerHTML = '';
+            
+            trainingPlan.slice(0, 3).forEach(session => {
+                const badgeColor = getBadgeColor(session.type);
+                const iconClass = getIconClass(session.type);
+                
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-2xl bg-dark-900/60 border border-dark-700 flex items-center justify-between transition-all ${session.completed ? 'opacity-60 bg-dark-900/30' : ''}`;
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl ${badgeColor} flex items-center justify-center text-lg">
+                            <i class="ph-bold ${iconClass}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-dark-700 text-gray-300">${session.day}</span>
+                                <h4 class="text-sm font-bold text-white ${session.completed ? 'line-through text-gray-400' : ''}">${session.name}</h4>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-0.5">${session.duration} min • ${session.intensity} ${session.notes ? '• ' + session.notes : ''}</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleComplete('${session.id}')" class="w-8 h-8 rounded-full border ${session.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-dark-600 hover:border-brand-500 text-transparent'} flex items-center justify-center transition-all">
+                        <i class="ph-bold ph-check text-sm ${session.completed ? 'text-white' : ''}"></i>
+                    </button>
+                `;
+                todayContainer.appendChild(item);
+            });
+        }
+
+        // Render full weekly plan grid
+        function renderWeeklyPlan() {
+            const container = document.getElementById('weekly-plan-container');
+            container.innerHTML = '';
+
+            const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+            days.forEach(day => {
+                const daySessions = trainingPlan.filter(s => s.day === day);
+                
+                const col = document.createElement('div');
+                col.className = "bg-dark-800 border border-dark-700 rounded-2xl p-4 flex flex-col justify-between shadow-lg";
+                
+                let sessionsHtml = '';
+                if(daySessions.length === 0) {
+                    sessionsHtml = `<div class="text-center py-6 text-gray-500 text-xs italic">Aucune séance</div>`;
+                } else {
+                    daySessions.forEach(s => {
+                        const badgeColor = getBadgeColor(s.type);
+                        const iconClass = getIconClass(s.type);
+                        sessionsHtml += `
+                            <div class="p-3 rounded-xl bg-dark-900/80 border border-dark-700/80 mb-2 relative group">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-7 h-7 rounded-lg ${badgeColor} flex items-center justify-center text-xs">
+                                            <i class="ph-bold ${iconClass}"></i>
+                                        </div>
+                                        <span class="text-xs font-bold text-white ${s.completed ? 'line-through text-gray-400' : ''}">${s.name}</span>
+                                    </div>
+                                    <button onclick="deleteSession('${s.id}')" class="text-gray-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-150 transition-opacity">
+                                        <i class="ph-bold ph-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2 flex items-center justify-between text-[11px] text-gray-400">
+                                    <span>${s.duration} min • ${s.intensity}</span>
+                                    <button onclick="toggleComplete('${s.id}')" class="px-2 py-0.5 rounded text-[10px] font-semibold ${s.completed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-dark-700 text-gray-300 hover:bg-brand-600 hover:text-white'}">
+                                        ${s.completed ? 'Fait ✓' : 'Valider'}
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                col.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-dark-700">
+                            <h3 class="font-bold text-sm text-white">${day}</h3>
+                            <button onclick="openAddSessionModalForDay('${day}')" class="w-6 h-6 rounded-lg bg-dark-700 hover:bg-brand-500 hover:text-white text-gray-400 flex items-center justify-center text-xs transition-all">
+                                <i class="ph-bold ph-plus"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-2">
+                            ${sessionsHtml}
+                        </div>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-dark-700/50 text-right">
+                        <span class="text-[10px] text-gray-500 font-mono">${daySessions.reduce((a,b)=>a+b.duration,0)} min total</span>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function getBadgeColor(type) {
+            switch(type) {
+                case 'run': return 'bg-orange-500/10 text-orange-400 border border-orange-500/20';
+                case 'bike': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+                case 'gym': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
+                case 'rest': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                default: return 'bg-gray-500/10 text-gray-400';
+            }
+        }
+
+        function getIconClass(type) {
+            switch(type) {
+                case 'run': return 'ph-sneaker-move';
+                case 'bike': return 'ph-bicycle';
+                case 'gym': return 'ph-barbell';
+                case 'rest': return 'ph-bed';
+                default: return 'ph-activity';
+            }
+        }
+
+        // Toggle session completed status
+        function toggleComplete(id) {
+            const session = trainingPlan.find(s => s.id === id);
+            if(session) {
+                session.completed = !session.completed;
+                saveData();
+            }
+        }
+
+        // Delete session
+        function deleteSession(id) {
+            trainingPlan = trainingPlan.filter(s => s.id !== id);
+            saveData();
+        }
+
+        // Modal controls
+        function openAddSessionModal() {
+            document.getElementById('session-id').value = '';
+            document.getElementById('session-form').reset();
+            document.getElementById('modal-title').innerText = "Ajouter une Séance";
+            document.getElementById('session-modal').classList.remove('hidden');
+        }
+
+        function openAddSessionModalForDay(day) {
+            openAddSessionModal();
+            document.getElementById('session-day').value = day;
+        }
+
+        function closeAddSessionModal() {
+            document.getElementById('session-modal').classList.add('hidden');
+        }
+
+        function handleSaveSession(e) {
+            e.preventDefault();
+            const id = document.getElementById('session-id').value || Date.now().toString();
+            const day = document.getElementById('session-day').value;
+            const type = document.getElementById('session-type').value;
+            const name = document.getElementById('session-name').value;
+            const duration = parseInt(document.getElementById('session-duration').value) || 0;
+            const intensity = document.getElementById('session-intensity').value;
+            const notes = document.getElementById('session-notes').value;
+
+            const existingIndex = trainingPlan.findIndex(s => s.id === id);
+            if(existingIndex >= 0) {
+                trainingPlan[existingIndex] = { ...trainingPlan[existingIndex], day, type, name, duration, intensity, notes };
+            } else {
+                trainingPlan.push({ id, day, type, name, duration, intensity, completed: false, notes });
+            }
+
+            closeAddSessionModal();
+            saveData();
+        }
+
+        function resetWeeklyPlan() {
+            if(confirm("Voulez-vous réinitialiser le plan aux valeurs par défaut ?")) {
+                trainingPlan = [...defaultPlan];
+                saveData();
+            }
+        }
+
+        // AI Plan Generator logic
+        function handleGeneratePlan(e) {
+            e.preventDefault();
+            const goal = document.getElementById('gen-goal').value;
+            const level = document.getElementById('gen-level').value;
+
+            let generated = [];
+
+            if(goal === 'endurance') {
+                generated = [
+                    { id: '1', day: 'Lundi', type: 'run', name: 'Footing Fondamental', duration: 45, intensity: 'Faible', completed: false, notes: 'Zone 2 aérobie pure.' },
+                    { id: '2', day: 'Mardi', type: 'bike', name: 'Sortie Gravel Endurance', duration: 90, intensity: 'Modérée', completed: false, notes: 'Rouler en continu sans forcer.' },
+                    { id: '3', day: 'Mercredi', type: 'gym', name: 'Gainage & Posture', duration: 30, intensity: 'Faible', completed: false, notes: 'Renforcement tronc.' },
+                    { id: '4', day: 'Jeudi', type: 'run', name: 'Footing Long Tempo', duration: 60, intensity: 'Modérée', completed: false, notes: 'Rythme régulier.' },
+                    { id: '5', day: 'Vendredi', type: 'rest', name: 'Repos Total', duration: 0, intensity: 'Faible', completed: false, notes: 'Récupération passive.' },
+                    { id: '6', day: 'Samedi', type: 'bike', name: 'Sortie Longue Vélo', duration: 150, intensity: 'Modérée', completed: false, notes: 'Hydratation et nutrition.' },
+                    { id: '7', day: 'Dimanche', type: 'rest', name: 'Marche & Étirements', duration: 30, intensity: 'Faible', completed: false, notes: 'Mobilité douce.' }
+                ];
+            } else if(goal === 'cardio') {
+                generated = [
+                    { id: '1', day: 'Lundi', type: 'run', name: 'Fractionné VMA Courte', duration: 50, intensity: 'Élevée', completed: false, notes: '15/15 secondes.' },
+                    { id: '2', day: 'Mardi', type: 'bike', name: 'Intervalles Haute Intensité', duration: 60, intensity: 'Élevée', completed: false, notes: 'Seuil anaérobie.' },
+                    { id: '3', day: 'Mercredi', type: 'rest', name: 'Repos & Récupération', duration: 0, intensity: 'Faible', completed: false, notes: 'Sommeil prioritaire.' },
+                    { id: '4', day: 'Jeudi', type: 'run', name: 'Seuil Lactique', duration: 55, intensity: 'Élevée', completed: false, notes: '3x 2000m au seuil.' },
+                    { id: '5', day: 'Vendredi', type: 'gym', name: 'Renfo Haut du Corps & Core', duration: 40, intensity: 'Modérée', completed: false, notes: 'Stabilité.' },
+                    { id: '6', day: 'Samedi', type: 'bike', name: 'Sortie Rythmée Gravel', duration: 90, intensity: 'Élevée', completed: false, notes: 'Relances en bosses.' },
+                    { id: '7', day: 'Dimanche', type: 'run', name: 'Footing Régénération', duration: 40, intensity: 'Faible', completed: false, notes: 'Zone 1-2.' }
+                ];
+            } else {
+                // Hybride ou Course
+                generated = [
+                    { id: '1', day: 'Lundi', type: 'run', name: 'Footing Actif', duration: 45, intensity: 'Modérée', completed: false, notes: 'Aisance respiratoire.' },
+                    { id: '2', day: 'Mardi', type: 'bike', name: 'Cyclisme Souple', duration: 75, intensity: 'Faible', completed: false, notes: 'Récup active.' },
+                    { id: '3', day: 'Mercredi', type: 'gym', name: 'Renforcement Full Body', duration: 50, intensity: 'Élevée', completed: false, notes: 'Squats, fentes, gainage.' },
+                    { id: '4', day: 'Jeudi', type: 'run', name: 'Intervalles Mixtes', duration: 50, intensity: 'Élevée', completed: false, notes: '5x 1000m.' },
+                    { id: '5', day: 'Vendredi', type: 'rest', name: 'Repos Complet', duration: 0, intensity: 'Faible', completed: false, notes: 'Détente.' },
+                    { id: '6', day: 'Samedi', type: 'run', name: 'Sortie Longue Hybride', duration: 90, intensity: 'Modérée', completed: false, notes: 'Alternance sentier/route.' },
+                    { id: '7', day: 'Dimanche', type: 'gym', name: 'Yoga & Étirements', duration: 40, intensity: 'Faible', completed: false, notes: 'Souplesse musculaire.' }
+                ];
+            }
+
+            trainingPlan = generated;
+            saveData();
+            switchTab('dashboard');
+        }
+
+        // Timer & Stopwatch Logic
+        let swInterval = null;
+        let swSeconds = 0;
+        let swRunning = false;
+
+        function setTimerMode(mode) {
+            const swView = document.getElementById('view-stopwatch');
+            const hiitView = document.getElementById('view-hiit');
+            const swBtn = document.getElementById('btn-mode-stopwatch');
+            const hiitBtn = document.getElementById('btn-mode-hiit');
+
+            if(mode === 'stopwatch') {
+                swView.classList.remove('hidden');
+                hiitView.classList.add('hidden');
+                swBtn.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white transition-all";
+                hiitBtn.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-dark-700 text-gray-300 transition-all";
+            } else {
+                swView.classList.add('hidden');
+                hiitView.classList.remove('hidden');
+                hiitBtn.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white transition-all";
+                swBtn.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-dark-700 text-gray-300 transition-all";
+            }
+        }
+
+        function toggleStopwatch() {
+            const btn = document.getElementById('sw-start-btn');
+            if(swRunning) {
+                clearInterval(swInterval);
+                swRunning = false;
+                btn.innerHTML = `<i class="ph-bold ph-play"></i> Démarrer`;
+                btn.className = "bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-500/20 flex items-center gap-2";
+            } else {
+                swRunning = true;
+                btn.innerHTML = `<i class="ph-bold ph-pause"></i> Pause`;
+                btn.className = "bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-amber-500/20 flex items-center gap-2";
+                
+                const startTime = Date.now() - (swSeconds * 1000);
+                swInterval = setInterval(() => {
+                    swSeconds = Math.floor((Date.now() - startTime) / 1000);
+                    updateStopwatchDisplay();
+                }, 1000);
+            }
+        }
+
+        function resetStopwatch() {
+            clearInterval(swInterval);
+            swRunning = false;
+            swSeconds = 0;
+            updateStopwatchDisplay();
+            const btn = document.getElementById('sw-start-btn');
+            btn.innerHTML = `<i class="ph-bold ph-play"></i> Démarrer`;
+            btn.className = "bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-500/20 flex items-center gap-2";
+        }
+
+        function updateStopwatchDisplay() {
+            const hrs = String(Math.floor(swSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((swSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(swSeconds % 60).padStart(2, '0');
+            document.getElementById('sw-display').innerText = `${hrs}:${mins}:${secs}`;
+        }
+
+        // Quick timer from dashboard
+        let quickTimerInterval = null;
+        function startQuickTimer(seconds) {
+            clearInterval(quickTimerInterval);
+            let timeLeft = seconds;
+            const display = document.getElementById('quick-timer-display');
+            const label = document.getElementById('quick-timer-label');
+            label.innerText = `Chrono en cours... (${seconds}s)`;
+
+            quickTimerInterval = setInterval(() => {
+                display.innerText = `00:${String(timeLeft).padStart(2, '0')}`;
+                if(timeLeft <= 0) {
+                    clearInterval(quickTimerInterval);
+                    label.innerText = `Terminé ⚡ Bon travail !`;
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        // HIIT Timer logic
+        let hiitInterval = null;
+        let hiitRunning = false;
+        function toggleHiit() {
+            const startBtn = document.getElementById('hiit-start-btn');
+            if(hiitRunning) {
+                clearInterval(hiitInterval);
+                hiitRunning = false;
+                startBtn.innerHTML = `<i class="ph-bold ph-play"></i> Lancer HIIT`;
+                return;
+            }
+
+            hiitRunning = true;
+            startBtn.innerHTML = `<i class="ph-bold ph-pause"></i> Pause`;
+            
+            let workTime = parseInt(document.getElementById('hiit-work').value) || 30;
+            let restTime = parseInt(document.getElementById('hiit-rest').value) || 30;
+            let currentTime = workTime;
+            let isWorkPhase = true;
+
+            const display = document.getElementById('hiit-display');
+            const status = document.getElementById('hiit-status');
+
+            status.innerText = "EFFORT (SPRINT)";
+            status.className = "text-xs font-sans text-brand-400 font-bold uppercase tracking-widest mt-2";
+
+            hiitInterval = setInterval(() => {
+                display.innerText = currentTime;
+                if(currentTime <= 0) {
+                    isWorkPhase = !isWorkPhase;
+                    currentTime = isWorkPhase ? workTime : restTime;
+                    status.innerText = isWorkPhase ? "EFFORT (SPRINT)" : "RÉCUPÉRATION";
+                    status.className = isWorkPhase ? "text-xs font-sans text-brand-400 font-bold uppercase tracking-widest mt-2" : "text-xs font-sans text-emerald-400 font-bold uppercase tracking-widest mt-2";
+                }
+                currentTime--;
+            }, 1000);
+        }
+
+        function resetHiit() {
+            clearInterval(hiitInterval);
+            hiitRunning = false;
+            document.getElementById('hiit-display').innerText = "30";
+            document.getElementById('hiit-status').innerText = "Prêt";
+            document.getElementById('hiit-start-btn').innerHTML = `<i class="ph-bold ph-play"></i> Lancer HIIT`;
+        }
+
+        // Initial load
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>
