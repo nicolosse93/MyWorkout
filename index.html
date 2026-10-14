@@ -76,6 +76,10 @@
                 <h1 class="font-bold text-lg tracking-tight">Mon Plan Sportif</h1>
             </div>
             <div class="flex items-center space-x-3">
+                <button onclick="exportToGarminCalendar()" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-sm transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-download"></i>
+                    <span class="hidden sm:inline">Export Garmin (ICS)</span>
+                </button>
                 <span id="user-email-display" class="text-xs text-slate-400 hidden sm:inline"></span>
                 <button id="logout-btn" class="bg-dark-700 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-sm transition">
                     <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Déconnexion
@@ -229,7 +233,11 @@
             </div>
 
             <div class="flex space-x-3 pt-2">
-                <button onclick="closeDetailsModal()" class="w-full bg-dark-700 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition">Fermer</button>
+                <button id="detail-toggle-btn" onclick="" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Marquer comme terminé</span>
+                </button>
+                <button onclick="closeDetailsModal()" class="bg-dark-700 hover:bg-slate-700 text-slate-300 font-semibold px-4 py-2.5 rounded-xl transition text-sm">Fermer</button>
             </div>
         </div>
     </div>
@@ -267,7 +275,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Niveau d'énergie actuel</label>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Niveau d'énergie</label>
                         <select id="gen-energy" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
                             <option value="haute">Pêche d'enfer</option>
                             <option value="normale" selected>Normal / Stable</option>
@@ -276,14 +284,26 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Nombre de séances dans la semaine</label>
-                    <select id="gen-frequency" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
-                        <option value="2">2 Séances</option>
-                        <option value="3" selected>3 Séances</option>
-                        <option value="4">4 Séances</option>
-                        <option value="5">5 Séances</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Séances Course</label>
+                        <select id="gen-runs" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
+                            <option value="0">0 Séance</option>
+                            <option value="1">1 Séance</option>
+                            <option value="2" selected>2 Séances</option>
+                            <option value="3">3 Séances</option>
+                            <option value="4">4 Séances</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Séances Vélo</label>
+                        <select id="gen-bikes" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-blue-500">
+                            <option value="0">0 Séance</option>
+                            <option value="1" selected>1 Séance</option>
+                            <option value="2">2 Séances</option>
+                            <option value="3">3 Séances</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex space-x-3 pt-2">
@@ -453,7 +473,7 @@
                 const dayWorkouts = workouts.filter(w => w.date === dateStr);
                 const count = dayWorkouts.length;
 
-                // Conteneur des séances du jour avec flex-1 pour occuper toute la case si 1 seule séance
+                // Conteneur des séances du jour
                 const workoutsContainer = document.createElement('div');
                 workoutsContainer.className = count === 1 ? 'flex-1 flex flex-col justify-center space-y-1 my-auto' : 'space-y-1.5 overflow-y-auto max-h-[95px]';
 
@@ -467,8 +487,6 @@
                         'Repos': 'bg-slate-700/60 text-slate-300 border-slate-600'
                     };
                     const badgeClass = typeColors[w.type] || 'bg-slate-700 text-slate-300 border-slate-600';
-
-                    // Si 1 seule séance, on lui donne plus de hauteur (p-2.5) et un rendu plus visuel
                     const cardPadding = count === 1 ? 'p-2.5 text-xs' : 'p-1.5 text-xs';
 
                     const workoutCard = document.createElement('div');
@@ -480,8 +498,8 @@
                         <div class="flex items-center justify-between mb-0.5">
                             <span class="font-bold truncate text-[11px] uppercase tracking-wider opacity-75">${w.type}</span>
                             <div class="flex items-center space-x-1.5">
-                                <button onclick="toggleWorkout('${w.id}', ${!w.completed})" class="hover:text-emerald-400"><i class="fa-solid ${w.completed ? 'fa-rotate-left' : 'fa-check'} text-[11px]"></i></button>
-                                <button onclick="deleteWorkout('${w.id}')" class="hover:text-red-400"><i class="fa-solid fa-trash text-[11px]"></i></button>
+                                <button onclick="event.stopPropagation(); toggleWorkout('${w.id}', ${!w.completed})" class="hover:text-emerald-400"><i class="fa-solid ${w.completed ? 'fa-rotate-left' : 'fa-check'} text-[11px]"></i></button>
+                                <button onclick="event.stopPropagation(); deleteWorkout('${w.id}')" class="hover:text-red-400"><i class="fa-solid fa-trash text-[11px]"></i></button>
                             </div>
                         </div>
                         <div class="font-semibold truncate leading-tight" onclick="openDetails('${w.id}')" title="${w.title}">${w.title}</div>
@@ -529,15 +547,21 @@
         }
 
         // ==========================================
-        // ACTIONS CRUD ENTRAÎNEMENTS
+        // ACTIONS CRUD & EXPORT
         // ==========================================
         async function toggleWorkout(id, status) {
             await supabaseClient.from('workouts').update({ completed: status }).eq('id', id);
-            fetchWorkouts();
+            await fetchWorkouts();
+            // Si la modale de détails est ouverte sur cet ID, on met à jour son bouton
+            const currentOpenId = detailsModal.dataset.currentId;
+            if (currentOpenId === id) {
+                openDetails(id);
+            }
         }
 
         async function deleteWorkout(id) {
             await supabaseClient.from('workouts').delete().eq('id', id);
+            closeDetailsModal();
             fetchWorkouts();
         }
 
@@ -561,6 +585,8 @@
             const w = workouts.find(item => item.id == id);
             if (!w) return;
 
+            detailsModal.dataset.currentId = id;
+
             document.getElementById('detail-title').textContent = w.title;
             document.getElementById('detail-date').textContent = w.date;
             document.getElementById('detail-warmup').textContent = w.warmup || 'Non spécifié';
@@ -575,11 +601,24 @@
                 w.type === 'Renfo' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-slate-700 text-slate-300'
             );
 
+            // Bouton Marquer comme terminé dans la modale
+            const toggleBtn = document.getElementById('detail-toggle-btn');
+            if (w.completed) {
+                toggleBtn.className = "flex-1 bg-dark-700 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center space-x-2";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i><span>Marquer comme non terminé</span>`;
+                toggleBtn.onclick = () => toggleWorkout(w.id, false);
+            } else {
+                toggleBtn.className = "flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/30";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-check"></i><span>Marquer comme terminé</span>`;
+                toggleBtn.onclick = () => toggleWorkout(w.id, true);
+            }
+
             detailsModal.classList.remove('hidden');
         }
 
         function closeDetailsModal() {
             detailsModal.classList.add('hidden');
+            delete detailsModal.dataset.currentId;
         }
 
         function openGeneratorModal() {
@@ -587,6 +626,40 @@
         }
         function closeGeneratorModal() {
             generatorModal.classList.add('hidden');
+        }
+
+        // Export au format iCalendar (.ics) compatible Garmin Connect / Google Agenda
+        function exportToGarminCalendar() {
+            if (workouts.length === 0) {
+                alert("Aucun entraînement à exporter.");
+                return;
+            }
+
+            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Mon Plan Sportif//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
+
+            workouts.forEach(w => {
+                let dateFormatted = w.date.replace(/-/g, '');
+                let description = `Type: ${w.type}\\nEchauffement: ${w.warmup || 'N/A'}\\nBloc Principal: ${w.main_block || 'N/A'}\\nRetour au calme: ${w.cooldown || 'N/A'}`;
+                
+                icsContent += "BEGIN:VEVENT\n";
+                icsContent += `UID:workout-${w.id}@monplansportif\n`;
+                icsContent += `DTSTAMP:${dateFormatted}T000000Z\n`;
+                icsContent += `DTSTART;VALUE=DATE:${dateFormatted}\n`;
+                icsContent += `DTEND;VALUE=DATE:${dateFormatted}\n`;
+                icsContent += `SUMMARY:[${w.type}] ${w.title}\n`;
+                icsContent += `DESCRIPTION:${description}\n`;
+                icsContent += "END:VEVENT\n";
+            });
+
+            icsContent += "END:VCALENDAR";
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', 'plan_entrainement_garmin.ics');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         document.getElementById('workout-form').addEventListener('submit', async (e) => {
@@ -611,12 +684,13 @@
             }
         });
 
-        // Générateur de plan enrichi avec Warmup / Main / Cooldown
+        // Générateur de plan avec nombre de séances course et vélo personnalisé
         document.getElementById('generator-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const goal = document.getElementById('gen-goal').value;
             const energy = document.getElementById('gen-energy').value;
-            const frequency = parseInt(document.getElementById('gen-frequency').value);
+            const targetRuns = parseInt(document.getElementById('gen-runs').value);
+            const targetBikes = parseInt(document.getElementById('gen-bikes').value);
 
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) return;
@@ -627,50 +701,57 @@
             const monday = new Date(today);
             monday.setDate(today.getDate() - currentDayOfWeek + 1);
 
-            let offsets = frequency === 2 ? [1, 5] : (frequency === 3 ? [1, 3, 6] : (frequency === 4 ? [1, 2, 4, 6] : [1, 2, 4, 5, 6]));
-            let workoutsTemplate = [];
+            // Banque de modèles
+            let runTemplates = [
+                { type: 'Course', title: 'Fractionné 5K/10K' + intensityTag, warmup: '15 min footing + gammes', main: '5x 1000m allure cible (récup 90s)', cooldown: '10 min footing souple' },
+                { type: 'Course', title: 'Endurance Fondamentale', warmup: '10 min progressif', main: '45 min en Zone 2 (allure conversationnelle)', cooldown: '5 min marche' },
+                { type: 'Course', title: 'Sortie Longue Progressive', warmup: '10 min souple', main: '1h00 continu avec accélération finale', cooldown: '5 min retour au calme' },
+                { type: 'Course', title: 'Footing Actif & Lignes', warmup: '10 min souple', main: '35 min footing + 5 lignes droites de 80m', cooldown: '5 min étirements' }
+            ];
 
-            if (goal === '5k') {
-                workoutsTemplate = [
-                    { type: 'Course', title: 'Fractionné Court 5K' + intensityTag, warmup: '15 min footing + gammes athlétiques', main: '10x (30s rapide / 30s lent)', cooldown: '10 min retour au calme + étirements' },
-                    { type: 'Course', title: 'Endurance Fondamentale', warmup: '10 min progressif', main: '40 min allure conversationnelle (Zone 2)', cooldown: '5 min marche' },
-                    { type: 'Renfo', title: 'Renforcement Spécifique', warmup: '5 min mobilité articulaire', main: '3x (15 squats, 12 fentes, 45s gainage)', cooldown: '5 min étirements' },
-                    { type: 'Course', title: 'Allure Spécifique 5K', warmup: '15 min échauffement', main: '3x 1000m allure 5K (récup 2 min)', cooldown: '10 min footing lent' },
-                    { type: 'Course', title: 'Sortie Longue Progressive', warmup: '10 min souple', main: '45 min continu avec accélération finale', cooldown: '5 min marche' }
-                ];
-            } else if (goal === '10k') {
-                workoutsTemplate = [
-                    { type: 'Course', title: 'Fractionné Long 10K' + intensityTag, warmup: '15 min footing progressif', main: '4x 1000m allure 10K (récup 90s)', cooldown: '10 min retour au calme' },
-                    { type: 'Course', title: 'Endurance Fondamentale 10K', warmup: '10 min échauffement', main: '50 min endurance fondamentale', cooldown: '5 min étirements' },
-                    { type: 'Renfo', title: 'Gainage & Posture', warmup: '5 min mobilité', main: 'Circuit abdos & renfo tronc 20 min', cooldown: '5 min relaxation' },
-                    { type: 'Course', title: 'Footing Actif', warmup: '10 min souple', main: '35 min avec 5 lignes droites en fin de séance', cooldown: '5 min marche' },
-                    { type: 'Course', title: 'Sortie Longue 10K', warmup: '10 min départ lent', main: '1h05 endurance fondamentale', cooldown: '5 min retour au calme' }
-                ];
-            } else {
-                workoutsTemplate = [
-                    { type: 'Course', title: 'Footing Léger Maintien' + intensityTag, warmup: '10 min trot', main: '35 min footing continu', cooldown: '5 min étirements' },
-                    { type: 'Vélo', title: 'Sortie Vélo Douce', warmup: '10 min souple', main: '45 min en cadence modérée', cooldown: '5 min retour au calme' },
-                    { type: 'Renfo', title: 'Full Body Santé', warmup: '5 min mobilité', main: 'Exercices poids de corps généraux 30 min', cooldown: '5 min stretching' },
-                    { type: 'Course', title: 'Footing Récupération', warmup: '5 min marche', main: '30 min allure très lente', cooldown: '5 min respiration' },
-                    { type: 'Vélo', title: 'Sortie Vélo Modérée', warmup: '15 min progressif', main: '1h de vélo en endurance', cooldown: '5 min retour au calme' }
-                ];
+            let bikeTemplates = [
+                { type: 'Vélo', title: 'Sortie Vélo Endurance', warmup: '10 min souple', main: '1h15 en cadence modérée (90 rpm)', cooldown: '5 min retour au calme' },
+                { type: 'Vélo', title: 'Séance Vélo / Intervalles', warmup: '15 min progressif', main: '4x 5 min au seuil (récup 3 min souple)', cooldown: '10 min retour au calme' },
+                { type: 'Vélo', title: 'Sortie Gravel / Récup', warmup: '10 min', main: '50 min souple en nature', cooldown: '5 min étirements' }
+            ];
+
+            // Distribution intelligente des jours dans la semaine (Jours 1, 2, 3, 4, 5, 6 -> Lundi à Samedi)
+            let totalSessions = targetRuns + targetBikes;
+            if (totalSessions === 0) {
+                alert("Veuillez sélectionner au moins une activité course ou vélo.");
+                return;
             }
 
+            let daysSlots = [1, 3, 4, 5, 6].slice(0, totalSessions);
             let inserts = [];
-            for (let i = 0; i < frequency; i++) {
-                let templateIndex = i % workoutsTemplate.length;
-                let dayOffset = offsets[i] !== undefined ? offsets[i] : i;
-                
+            let runCount = 0;
+            let bikeCount = 0;
+
+            for (let i = 0; i < totalSessions; i++) {
+                let sessionType = '';
+                let template = null;
+
+                if (runCount < targetRuns) {
+                    sessionType = 'Course';
+                    template = runTemplates[runCount % runTemplates.length];
+                    runCount++;
+                } else {
+                    sessionType = 'Vélo';
+                    template = bikeTemplates[bikeCount % bikeTemplates.length];
+                    bikeCount++;
+                }
+
+                let dayOffset = daysSlots[i] || (i + 1);
                 let targetDate = new Date(monday);
                 targetDate.setDate(monday.getDate() + dayOffset);
                 let dateString = targetDate.toISOString().split('T')[0];
 
                 inserts.push({
-                    title: workoutsTemplate[templateIndex].title,
-                    type: workoutsTemplate[templateIndex].type,
-                    warmup: workoutsTemplate[templateIndex].warmup,
-                    main_block: workoutsTemplate[templateIndex].main,
-                    cooldown: workoutsTemplate[templateIndex].cooldown,
+                    title: template.title,
+                    type: template.type,
+                    warmup: template.warmup,
+                    main_block: template.main,
+                    cooldown: template.cooldown,
                     date: dateString,
                     completed: false,
                     user_id: user.id
